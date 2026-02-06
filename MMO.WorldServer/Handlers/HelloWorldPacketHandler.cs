@@ -7,5 +7,6 @@ public class HelloWorldPacketHandler : IPacketHandler
     public void Handle(IPacket packet)
     {
         var data = (HelloPacket)packet;
+        Console.WriteLine($"Hello packet handled with number: {data.Number}");
     }
 }

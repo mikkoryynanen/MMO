@@ -8,6 +8,7 @@ var mysql = builder.AddMySql("mysql")
     .WithDataVolume("mysql-data");
 
 var worldDB = mysql.AddDatabase("worlddb");
+var accountDB = mysql.AddDatabase("accountdb");
 
 var worldServer = builder.AddProject<Projects.MMO_WorldServer>("world-server")
      // TODO Could move to it's own builder class in the future to clean this up
@@ -29,5 +30,10 @@ builder.AddProject<Projects.MMO_DummyClient>("dummy-client")
     .WithReplicas(2)
     .WithReference(worldServer)
     .WaitFor(worldServer);
+
+var authAPI = builder.AddProject<Projects.MMO_Auth>("auth-api")
+    .WithHttpHealthCheck("/health")
+    .WithReferenceRelationship(accountDB)
+    .WaitFor(accountDB);
 
 await builder.Build().RunAsync();

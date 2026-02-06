@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="MMO.AppHost/MMO.AppHost.csproj" />
+  <Project Path="MMO.Auth/MMO.Auth.csproj" />
   <Project Path="MMO.DummyClient/MMO.DummyClient.csproj" />
   <Project Path="MMO.Shared/MMO.Shared.csproj" />
   <Project Path="MMO.WorldServer/MMO.WorldServer.csproj" />

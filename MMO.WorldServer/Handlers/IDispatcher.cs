@@ -1,6 +1,8 @@
+using MMO.Shared;
+
 namespace MMO.WorldServer.Handlers;
 
 public interface IDispatcher
 {
-    void Dispatch(ushort opCode, byte[] payload);
+    void Dispatch(ushort opcode, IPacket packet);
 }

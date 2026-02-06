@@ -9,6 +9,7 @@ namespace MMO.WorldServer.Services;
 public sealed class GameHostedService : BackgroundService
 {
     private readonly IDispatcher _dispatcher;
+    private List<Session> _sessions = new();
 
     // TOOD Dependency Injection
     public GameHostedService(IDispatcher dispatcher)
@@ -27,47 +28,22 @@ public sealed class GameHostedService : BackgroundService
         {
             try
             {
-                var client = listener.AcceptTcpClientAsync(stoppingToken);
-                // TODO
-                // Create session for client
-                // Handle connection
+                var client = await listener.AcceptTcpClientAsync(stoppingToken);
 
-                while (true)
-                {
-                    // Read received bytes
-                    byte[] headerBuffer = new byte[6];
-                    await ReadStream(client.Result.GetStream(), headerBuffer, 6);
-
-                    int payloadLength = BitConverter.ToInt32(headerBuffer, 0) - 2; // 2 bytes for op code
-                    ushort opCode = BitConverter.ToUInt16(headerBuffer, 4);
-                    
-                    byte[] payload = new byte[payloadLength];
-                    if (payloadLength > 0)
-                    {
-                        await ReadStream(client.Result.GetStream(), payload, payloadLength);
-                    }
-                    
-                    // var session = new Session();
-                    
-                    _dispatcher.Dispatch(opCode, payload);
-                }
+                // Create the session and run it
+                var session = new Session(_dispatcher, client);
+                _sessions.Add(session);
+                Task.Run(async  () => await session.RunAsync(stoppingToken));
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
             }
         }
+        
+        foreach (var session in _sessions)
+            session.Disconnect();
 
         return Task.CompletedTask;
-    }
-
-    private async Task ReadStream(NetworkStream stream, byte[] buffer, int amount)
-    {
-       int bytesRead = 0;
-       while (bytesRead < amount)
-       {
-           int read = await stream.ReadAsync(buffer.AsMemory(bytesRead, amount - bytesRead), CancellationToken.None);
-           bytesRead += read;
-       }
     }
 }

@@ -1,10 +1,12 @@
 ﻿// TestClient/Program.cs
 
-using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using MessagePack;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using MMO.Shared;
+using MMO.Shared.Packets;
 
 var builder = Host.CreateApplicationBuilder(args);
 var host = builder.Build();
@@ -21,28 +23,30 @@ await tcpClient.ConnectAsync(uri.Host, uri.Port);
 
 // Console.WriteLine($"Connected to {uri.Host}:{uri.Port}");
 
+var stream = tcpClient.GetStream();
 int times = 0;
 while (true)
 {
-    // Now use the DummyClient logic we discussed:
-    ushort pingOp = 33603;
-    Console.WriteLine($"Sending message with op ID {pingOp}");
-
-    var stream = tcpClient.GetStream();
-
-    using var ms = new MemoryStream();
-    using (var writer = new BinaryWriter(ms, Encoding.UTF8, leaveOpen: true)) {
-        writer.Write(6);    // 4 bytes
-        writer.Write(9);    // 4 bytes
-    }
-    byte[] body = ms.ToArray();
-
+    // using var ms = new MemoryStream();
+    // using var writer = new BinaryWriter(ms, Encoding.UTF8, leaveOpen: false);
+    
+    var helloPacket = new HelloPacket() { Number = 69 };
+    
+    // var envelope = new PacketEnvelope()
+    // {
+    //     OpCode = (ushort)OpCodes.Test,
+    //     // BodyLength =  body.Length,
+    //     Body = new HelloPacket() { Number = 69 }
+    // };
+    // var packet = MessagePackSerializer.Serialize<PacketEnvelope>(envelope);
+    var body = MessagePackSerializer.Serialize<IPacket>(helloPacket);
+    
     int totalLength = body.Length + 2; // Payload length + 2 bytes for the op code
     byte[] packet = new byte[4 + totalLength];
     
     // Header
     BitConverter.TryWriteBytes(packet.AsSpan(0, 4), totalLength); // Packet Body Length
-    BitConverter.TryWriteBytes(packet.AsSpan(4, 2), pingOp); // opcode
+    BitConverter.TryWriteBytes(packet.AsSpan(4, 2), (ushort)OpCodes.Test); // opcode
     // Body
     body.CopyTo(packet.AsSpan(6));
     

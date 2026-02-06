@@ -1,9 +1,11 @@
+using MMO.Shared;
+
 namespace MMO.WorldServer.Handlers;
 
 public class HelloWorldPacketHandler : IPacketHandler
 {
-    public void Handle(byte[] payload)
+    public void Handle(IPacket packet)
     {
-        throw new NotImplementedException();
+        var data = (HelloPacket)packet;
     }
 }

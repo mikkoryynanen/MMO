@@ -17,7 +17,12 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="MessagePack" Version="3.1.4" />
       <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\MMO.Shared\MMO.Shared.csproj" />
     </ItemGroup>
 
 </Project>

@@ -1,31 +1,35 @@
 using System.Text;
+using MMO.Shared;
 
 namespace MMO.WorldServer.Handlers;
 
 public class HandlerDispatcher : IDispatcher
 {
-    private Dictionary<ushort, Type> _handlerTypes = new();
+    private Dictionary<ushort, IPacketHandler> _handlerTypes = new();
 
     public HandlerDispatcher()
     {
         RegisterHandlers();
     }
 
-    public void Dispatch(ushort opCode, byte[] payload)
+    public void Dispatch(ushort opCode, IPacket packet)
     {
-        _handlerTypes[opCode].GetConstructor(Type.EmptyTypes)?.Invoke(null);
+        _handlerTypes[opCode].Handle(packet);
     }
 
     private void RegisterHandlers()
     {
-        var handlers = AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(s => s.GetTypes())
-            .Where(p => typeof(IPacketHandler).IsAssignableFrom(p) && !p.IsInterface && !p.IsAbstract);
-        foreach (var handlerType in handlers)
-        {
-            var opcode = GetStableOpcode(handlerType.FullName);
-            _handlerTypes[opcode] = handlerType;
-        }
+        _handlerTypes[(ushort)OpCodes.Test] = new HelloWorldPacketHandler();
+        
+        // var handlers = AppDomain.CurrentDomain.GetAssemblies()
+        //     .SelectMany(s => s.GetTypes())
+        //     .Where(p => typeof(IPacketHandler).IsAssignableFrom(p) && !p.IsInterface && !p.IsAbstract);
+        // foreach (var handlerType in handlers)
+        // {
+        //     var opcode = GetStableOpcode(handlerType.FullName);
+        //     // TODO Could build this better, without using reflection, but this is good enough for now
+        //     _handlerTypes[opcode] = (IPacketHandler)Activator.CreateInstance(handlerType)!;
+        // }
     }
     
     // TODO Move to utils

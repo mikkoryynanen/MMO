@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Hosting;
 using MMO.WorldServer.Handlers;
 using MMO.WorldServer.Services;
+using MMO.WorldServer.Singletons;
 
 namespace MMO.WorldServer;
 
@@ -15,6 +16,8 @@ internal class Program
             .ConfigureServices(sc =>
             {
                 sc.AddSingleton<IDispatcher, HandlerDispatcher>();
+                sc.AddSingleton<IWorldSimulator, WorldSimulator>();
+                sc.AddSingleton<ISessionManager, SessionManager>();
                 
                 sc.AddHostedService<GameHostedService>();
             });

@@ -26,10 +26,10 @@ var worldServer = builder.AddProject<Projects.MMO_WorldServer>("world-server")
     .WithEnvironment($"Network:Port", "24000")
     .WaitFor(worldDB);
 
-builder.AddProject<Projects.MMO_DummyClient>("dummy-client")
-    .WithReplicas(2)
-    .WithReference(worldServer)
-    .WaitFor(worldServer);
+// builder.AddProject<Projects.MMO_DummyClient>("dummy-client")
+//     .WithReplicas(2)
+//     .WithReference(worldServer)
+//     .WaitFor(worldServer);
 
 var authAPI = builder.AddProject<Projects.MMO_Auth>("auth-api")
     .WithHttpHealthCheck("/health")

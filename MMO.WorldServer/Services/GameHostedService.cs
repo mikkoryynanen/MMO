@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Sockets;
 using Microsoft.Extensions.Hosting;
 using MMO.WorldServer.Handlers;
+using MMO.WorldServer.Singletons;
 
 namespace MMO.WorldServer.Services;
 
@@ -9,12 +10,14 @@ namespace MMO.WorldServer.Services;
 public sealed class GameHostedService : BackgroundService
 {
     private readonly IDispatcher _dispatcher;
-    private List<Session> _sessions = new();
+    private readonly IWorldSimulator _worldSimulator;
+    private readonly ISessionManager _sessionManager;
 
-    // TOOD Dependency Injection
-    public GameHostedService(IDispatcher dispatcher)
+    public GameHostedService(IDispatcher dispatcher, IWorldSimulator worldSimulator, ISessionManager sessionManager)
     {
         _dispatcher = dispatcher;
+        _worldSimulator = worldSimulator;
+        _sessionManager = sessionManager;
     }
     
     protected override async Task<object> ExecuteAsync(CancellationToken stoppingToken)
@@ -23,26 +26,30 @@ public sealed class GameHostedService : BackgroundService
         
         var listener = new TcpListener(IPAddress.Any, 24000);
         listener.Start();
+        
+        // Run the world simulator, handled its own simulation thread
+        _worldSimulator.Start();
 
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
                 var client = await listener.AcceptTcpClientAsync(stoppingToken);
-
-                // Create the session and run it
-                var session = new Session(_dispatcher, client);
-                _sessions.Add(session);
-                Task.Run(async  () => await session.RunAsync(stoppingToken));
+                
+                var session = _sessionManager.CreateSession(client);
+                _worldSimulator.AddPlayer(session);
+                
+                // Architecture should look like this:
+                // (this)HostedService - Orchestrates the following layers
+                // NetworkLayer Thread - Read and write packets to/from clients and dispatches them to the correct handlers aka GameWorld thread
+                // GameWorld Thread - Ticks the game state and sends updates to NetworkLayer to send back to clients
+                
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
             }
         }
-        
-        foreach (var session in _sessions)
-            session.Disconnect();
 
         return Task.CompletedTask;
     }

@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+<PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+</PropertyGroup>
+
+<ItemGroup>
+    <!-- Aspire integration -->
+    <PackageReference Include="Aspire.Pomelo.EntityFrameworkCore.MySql" Version="13.1.0" />
+
+    <!-- Use EF Core 9 with .NET 10 - this is officially supported -->
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
+
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.3">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.3">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+</ItemGroup>
+
+</Project>

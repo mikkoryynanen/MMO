@@ -1,5 +1,4 @@
 using System.Net;
-using Microsoft.Extensions.Hosting;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
@@ -9,6 +8,10 @@ var mysql = builder.AddMySql("mysql")
 
 var worldDB = mysql.AddDatabase("worlddb");
 var accountDB = mysql.AddDatabase("accountdb");
+
+var migrations = builder.AddProject<Projects.MMO_Database_Migrations>("db-migrations")
+    .WithReference(accountDB)
+    .WaitFor(accountDB);
 
 var worldServer = builder.AddProject<Projects.MMO_WorldServer>("world-server")
      // TODO Could move to it's own builder class in the future to clean this up
@@ -24,16 +27,18 @@ var worldServer = builder.AddProject<Projects.MMO_WorldServer>("world-server")
     .WithEndpoint(24000, 24000, name: "tcp", isProxied: false)
     .WithEnvironment($"Network:Host", IPAddress.Any.ToString())
     .WithEnvironment($"Network:Port", "24000")
-    .WaitFor(worldDB);
+    .WaitFor(worldDB)
+    .WaitForCompletion(migrations);
 
 // builder.AddProject<Projects.MMO_DummyClient>("dummy-client")
 //     .WithReplicas(2)
 //     .WithReference(worldServer)
 //     .WaitFor(worldServer);
 
-var authAPI = builder.AddProject<Projects.MMO_Auth>("auth-api")
-    .WithHttpHealthCheck("/health")
-    .WithReferenceRelationship(accountDB)
-    .WaitFor(accountDB);
+// var authAPI = builder.AddProject<Projects.MMO_Auth>("auth-api")
+//     .WithHttpHealthCheck("/health")
+//     .WithReferenceRelationship(accountDB)
+//     .WaitFor(accountDB)
+//     .WaitForCompletion(migrations);
 
 await builder.Build().RunAsync();

@@ -1,3 +1,6 @@
+using MMO.Auth.Models;
+using MMO.Auth.Services;
+
 namespace MMO.Auth;
 
 public static class AuthEndpoints
@@ -8,22 +11,28 @@ public static class AuthEndpoints
         group.MapGet("/login", Login);
         group.MapGet("/create", Create);
     }
-
-    private static Task Create(HttpContext context)
+    
+    private static async Task<IResult> Create(CreateAccountRequestBody createBody, DatabaseService db)
     {
         // TODO
         // Get get request data (e.g., username and password)
         // Create user in database
         // Return success or failure response
+
+        await db.CreateAccountAsync(createBody);
         
-        throw new NotImplementedException();
+        return Results.NoContent();
     }
 
-    private static Task Login(HttpContext context)
+    private static async Task<IResult> Login(HttpContext context, DatabaseService db)
     {
         // TODO
         // Get get request data (e.g., username and password)
-        
-        return Task.CompletedTask;
+
+        var sessionToken = Guid.NewGuid().ToString("N");
+       
+        // Save token to auth table
+
+        return Results.Ok(new { SessionToken = sessionToken });
     }
 }

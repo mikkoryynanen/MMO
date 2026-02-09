@@ -102,12 +102,7 @@ public class WorldSimulator : IWorldSimulator
                 var ms = input.Timestamp - input.InputPacket.Timestamp;
 
                 // TODO Enable this once we have auth server running
-                // if (!_players.TryGetValue(input.PlayerId, out var player))
-                //     continue;
-
-                // TODO This should be removed once auth server is running
-                var player = _players.First().Value;
-                if (player == null)
+                if (!_players.TryGetValue(input.PlayerId, out var player))
                     continue;
 
                 // TODO Is is the correct player? since we are not disconnecting players

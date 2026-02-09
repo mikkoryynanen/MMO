@@ -9,13 +9,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Aspire.Hosting.MySql" Version="13.1.0" />
+      <ProjectReference Include="..\MMO.Auth\MMO.Auth.csproj" />
+      <ProjectReference Include="..\MMO.Database.Migrations\MMO.Database.Migrations.csproj" />
+      <ProjectReference Include="..\MMO.DummyClient\MMO.DummyClient.csproj" />
+      <ProjectReference Include="..\MMO.WorldServer\MMO.WorldServer.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\MMO.Auth\MMO.Auth.csproj" />
-      <ProjectReference Include="..\MMO.DummyClient\MMO.DummyClient.csproj" />
-      <ProjectReference Include="..\MMO.WorldServer\MMO.WorldServer.csproj" />
+      <PackageReference Include="Aspire.Hosting.MySql" Version="13.1.0" />
     </ItemGroup>
 
 </Project>

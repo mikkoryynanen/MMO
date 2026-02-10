@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace MMO.Database.Migrations.Models;
+namespace MMO.Database.Shared.Models;
 
 public class PlayerAccount
 {
@@ -10,7 +10,7 @@ public class PlayerAccount
     [Required, MaxLength(50)]
     public string Username { get; set; } = string.Empty;
     
-    [Required, EmailAddress, MaxLength(255)]
+    [EmailAddress, MaxLength(255)]
     public string Email { get; set; } = string.Empty;
     
     [Required]

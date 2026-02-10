@@ -1,23 +1,28 @@
 using Microsoft.EntityFrameworkCore;
-using MMO.Database.Migrations.Models;
+using MMO.Database.Shared;
 
 namespace MMO.Database.Migrations;
 
-public class MigrationWorker(IServiceProvider serviceProvider, IHostApplicationLifetime hostApplicationLifetime) : BackgroundService
+public class MigrationWorker : BackgroundService
 {
+    private readonly AccountDbContext _dbContext;
+
+    public MigrationWorker(
+        IServiceProvider serviceProvider, 
+        IHostApplicationLifetime hostApplicationLifetime,
+        AccountDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try
         {
-            // Create a scope to retrieve the DbContext
-            using var scope = serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<GameDbContext>();
-            
-            // This ensures the DB is created and migrations are applied
-            await dbContext.Database.MigrateAsync(stoppingToken);
+            await _dbContext.Database.MigrateAsync(stoppingToken);
             Console.WriteLine("✅ Database migration completed successfully.");
             
-            await dbContext.Database.EnsureCreatedAsync(stoppingToken);
+            await _dbContext.Database.EnsureCreatedAsync(stoppingToken);
         
             // Seed Data
             // var strategy = dbContext.Database.CreateExecutionStrategy();
@@ -44,5 +49,6 @@ public class MigrationWorker(IServiceProvider serviceProvider, IHostApplicationL
         // If you leave this running, the dashboard shows it as "Running" (Green)
         // If you stop it, Aspire might try to restart it depending on configuration.
         // For now, keeping it alive is often cleaner in the Dashboard.
+        Environment.Exit(0);
     }
 }

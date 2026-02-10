@@ -1,13 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using MMO.Database.Shared;
 
 namespace MMO.Database.Migrations;
 
-public class GameDbContextFactory : IDesignTimeDbContextFactory<GameDbContext>
+public class GameDbContextFactory : IDesignTimeDbContextFactory<AccountDbContext>
 {
-    public GameDbContext CreateDbContext(string[] args)
+    public AccountDbContext CreateDbContext(string[] args)
     {
-        var optionsBuilder = new DbContextOptionsBuilder<GameDbContext>();
+        var optionsBuilder = new DbContextOptionsBuilder<AccountDbContext>();
             
         // Specify MySQL version explicitly (no database connection needed)
         var serverVersion = new MySqlServerVersion(new Version(8, 0, 40)); // Use your MySQL version
@@ -15,9 +16,10 @@ public class GameDbContextFactory : IDesignTimeDbContextFactory<GameDbContext>
         // Use a dummy connection string - won't actually connect during migration creation
         optionsBuilder.UseMySql(
             "Server=localhost;Database=yourgame;User=root;Password=password;",
-            serverVersion
+            serverVersion,
+            mysqlOptions => mysqlOptions.MigrationsAssembly("MMO.Database.Migrations")
         );
             
-        return new GameDbContext(optionsBuilder.Options); 
+        return new AccountDbContext(optionsBuilder.Options); 
     }
 }

@@ -31,14 +31,14 @@ var worldServer = builder.AddProject<Projects.MMO_WorldServer>("world-server")
     .WaitForCompletion(migrations);
 
 // builder.AddProject<Projects.MMO_DummyClient>("dummy-client")
-//     .WithReplicas(2)
+//     .WithReplicas(1)
 //     .WithReference(worldServer)
 //     .WaitFor(worldServer);
 
-// var authAPI = builder.AddProject<Projects.MMO_Auth>("auth-api")
-//     .WithHttpHealthCheck("/health")
-//     .WithReferenceRelationship(accountDB)
-//     .WaitFor(accountDB)
-//     .WaitForCompletion(migrations);
+var authAPI = builder.AddProject<Projects.MMO_Auth>("auth-api")
+    .WithHttpHealthCheck("/health")
+    .WithReference(accountDB)
+    .WaitFor(accountDB)
+    .WaitForCompletion(migrations);
 
 await builder.Build().RunAsync();

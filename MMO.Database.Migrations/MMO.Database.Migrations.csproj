@@ -24,4 +24,11 @@
     </PackageReference>
 </ItemGroup>
 
+<ItemGroup>
+  <ProjectReference Include="..\MMO.Database.Shared\MMO.Database.Shared.csproj" />
+</ItemGroup>
+    
+    <ItemGroup>
+        <Folder Include="Migrations\" />
+    </ItemGroup> 
 </Project>

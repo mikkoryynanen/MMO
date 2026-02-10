@@ -1,6 +1,20 @@
-@MMO.Auth_HostAddress = http://localhost:5133
 
-GET {{MMO.Auth_HostAddress}}/weatherforecast/
+POST http://localhost:5133/auth/create
 Accept: application/json
+Content-Type: application/json
+
+{
+  "username": "DevUser1",
+  "password": "password"
+}
 
 ###
+
+POST http://localhost:5133/auth/login
+Accept: application/json
+Content-Type: application/json
+
+{
+"username": "DevUser1",
+"password": "password"
+}

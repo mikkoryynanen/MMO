@@ -7,10 +7,19 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Aspire.MySqlConnector" Version="13.1.0" />
-        <PackageReference Include="Dapper" Version="2.1.66" />
+        <PackageReference Include="Aspire.Pomelo.EntityFrameworkCore.MySql" Version="13.1.0" />
+        <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.2"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.3">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
+        <PackageReference Include="Riok.Mapperly" Version="4.3.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\MMO.Database.Shared\MMO.Database.Shared.csproj" />
     </ItemGroup>
 
 </Project>

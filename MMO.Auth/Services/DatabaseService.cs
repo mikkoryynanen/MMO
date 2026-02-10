@@ -1,49 +1,77 @@
-using Dapper;
+using Microsoft.EntityFrameworkCore;
 using MMO.Auth.Models;
-using MySqlConnector;
+using MMO.Database.Shared;
+using MMO.Database.Shared.Models;
 
 namespace MMO.Auth.Services;
 
 public class DatabaseService
 {
-    private readonly MySqlConnection _conn;
+    private readonly AccountDbContext _context;
+    private readonly Mapper _mapper;
 
-    public DatabaseService(IConfiguration config)
+    public DatabaseService(AccountDbContext context)
     {
-        _conn = new(config.GetConnectionString("AuthDb"));
+        _context = context;
+        _mapper = new Mapper();
     }
     
-    public async Task<bool> CreateAccountAsync(CreateAccountRequestBody body)
+    public async Task<PlayerAccountDTO?> CreateAccountAsync(CreateAccountRequestBody body)
     {
         try
         {
-            await _conn.ExecuteAsync(@"INSERT INTO Accounts(username, password_hash) VALUES (@Username, PasswordHash)",
-                new
+            var userExists = await _context.Accounts.AnyAsync(a => a.Username == body.Username);
+            if (!userExists)
+            {
+                var passwordHash = BCrypt.Net.BCrypt.HashPassword(body.Password);
+                var t = await _context.Accounts.AddAsync(new PlayerAccount()
                 {
-                    Username = body.Username,
-                    PasswordHash = body.PasswordHash
+                    AccountId = Guid.NewGuid().ToString("N"),
+                    Username =  body.Username,
+                    PasswordHash =  passwordHash
                 });
+                await _context.SaveChangesAsync();
             
-            return true;
+                return _mapper.PlayerAccountToPlayerAccountDTO(t.Entity);
+            }
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
         }
 
-        return false;
+        return null;
     }
     
-    public async Task GetAccount(string accountId)
+    public async Task<(PlayerAccountDTO?, SessionTokenDTO)> GetAccount(string username, string password)
     {
-        // await _conn.ExecuteAsync(@"INSERT INTO SessionTokens(token, account_id, created_at, expires_at)
-        //     VALUES (@Token, @AccountId, @CreatedAt, @ExpiresAt)",
-        //     new
-        //     {
-        //         Token = sessionToken,
-        //         AccountId = accountId,
-        //         CreatedAt = DateTime.UtcNow.Ticks,
-        //         ExpiresAt = DateTime.UtcNow.AddSeconds(60).Ticks
-        //     });
+        try
+        {
+
+            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Username == username);
+            if (account != null)
+            {
+                if (BCrypt.Net.BCrypt.Verify(password, account.PasswordHash))
+                {
+                    // Generate session token
+                    var token = await _context.SessionTokens.AddAsync(new SessionToken
+                    {
+                        Token = Guid.NewGuid().ToString("N"),
+                        AccountId = account.AccountId,
+                        CreatedAt = DateTime.UtcNow,
+                        ExpiresAt = DateTime.UtcNow.AddSeconds(60)
+                    });
+                    await _context.SaveChangesAsync();
+
+                    return (_mapper.PlayerAccountToPlayerAccountDTO(account), _mapper.SessionTokenToSessionTokenDTO(token.Entity));
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+
+        return (null, null);
     }
 }

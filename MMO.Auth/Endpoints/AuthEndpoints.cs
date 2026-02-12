@@ -14,11 +14,6 @@ public static class AuthEndpoints
     
     private static async Task<IResult> Create(CreateAccountRequestBody createBody, DatabaseService db)
     {
-        // TODO
-        // Get get request data (e.g., username and password)
-        // Create user in database
-        // Return success or failure response
-
         var account = await db.CreateAccountAsync(createBody);
         if (account != null)
         {
@@ -31,9 +26,6 @@ public static class AuthEndpoints
 
     private static async Task<IResult> Login(LoginRequestBody loginRequest, DatabaseService db)
     {
-        // TODO
-        // Get get request data (e.g., username and password)
-        
         var (account, sessionToken) = await db.GetAccount(loginRequest.Username, loginRequest.Password);
         if (account != null)
         {
@@ -41,7 +33,7 @@ public static class AuthEndpoints
 
             return Results.Ok(new { SessionToken = sessionToken });
         }
-        
-        return Results.NoContent();
+
+        return Results.Unauthorized();
     }
 }

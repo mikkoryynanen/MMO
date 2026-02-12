@@ -53,6 +53,19 @@ public class DatabaseService
             {
                 if (BCrypt.Net.BCrypt.Verify(password, account.PasswordHash))
                 {
+                    var existingToken = await _context.SessionTokens.FirstOrDefaultAsync(t => t.AccountId == account.AccountId);
+                    if (existingToken != null)
+                    {
+                        if (DateTime.UtcNow < existingToken.ExpiresAt)
+                        {
+                            return (_mapper.PlayerAccountToPlayerAccountDTO(account),
+                                _mapper.SessionTokenToSessionTokenDTO(existingToken));
+                        }
+                        // Remove old one
+                        _context.SessionTokens.Remove(existingToken);
+                        await _context.SaveChangesAsync();
+                    }
+                    
                     // Generate session token
                     var token = await _context.SessionTokens.AddAsync(new SessionToken
                     {
@@ -63,7 +76,8 @@ public class DatabaseService
                     });
                     await _context.SaveChangesAsync();
 
-                    return (_mapper.PlayerAccountToPlayerAccountDTO(account), _mapper.SessionTokenToSessionTokenDTO(token.Entity));
+                    return (_mapper.PlayerAccountToPlayerAccountDTO(account), 
+                        _mapper.SessionTokenToSessionTokenDTO(token.Entity));
                 }
             }
         }

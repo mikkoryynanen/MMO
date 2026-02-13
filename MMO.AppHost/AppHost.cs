@@ -15,7 +15,7 @@ var migrations = builder.AddProject<Projects.MMO_Database_Migrations>("db-migrat
 
 var worldServer = builder.AddProject<Projects.MMO_WorldServer>("world-server")
      // TODO Could move to it's own builder class in the future to clean this up
-//     .WithReferenceRelationship(worldDB.Resource)
+     .WithReference(worldDB)
     // .WithEnvironment("Database:World:Provider", "MySql")
     // .WithEnvironment(c =>
     // {

@@ -4,5 +4,5 @@ namespace MMO.WorldServer.Handlers;
 
 public interface IDispatcher
 {
-    void Dispatch(ushort opcode, IPacket packet);
+    void Dispatch(ushort opcode, IPacket packet, Guid sessionId);
 }

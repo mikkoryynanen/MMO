@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Threading.Channels;
 using MMO.Shared.Packets;
 using MMO.Shared.Packets.Server;
 
@@ -8,16 +7,14 @@ namespace MMO.WorldServer.Singletons;
 
 public struct PlayerInput
 {
-    // TODO Not the same as session id, this should be fetched from authentication flow
-    // NOTE Using session id for now
-    public Guid PlayerId { get; set; }
+    public Guid SessionId { get; set; }
     public InputPacket InputPacket { get; set; }
     public uint Timestamp { get; set; }
 }
 
+// TODO should be inside session
 public class Player
 {
-    public Guid Id { get; set; }
     public float X { get; set; }
     public float Y { get; set; }
 
@@ -58,12 +55,29 @@ public class WorldSimulator : IWorldSimulator
 
     public void AddPlayer(Session session)
     {
-        var id = Guid.Empty;
-        _players.TryAdd(id, new Player()
+        // TODO We could be adding sessions here and contain player inside session
+        _players.TryAdd(session.Id, new Player
         {
-            Id = id,
             Session = session
         });
+    }
+
+    public void RemovePlayer(Guid sessionId)
+    {
+        if (_players.TryRemove(sessionId, out var player))
+        {
+            Console.WriteLine($"Removed player");
+            // TODO Remove this players inputs as well? do they get removed from inputQueue
+
+            while (_inputQueue.TryPeek(out var peekedInput))
+            {
+                if (peekedInput.SessionId == sessionId)
+                {
+                    if (_inputQueue.TryDequeue(out _))
+                        Console.WriteLine($"Removed input");
+                }
+            }
+        }
     }
 
     public void EnqueueInput(PlayerInput input)
@@ -84,25 +98,23 @@ public class WorldSimulator : IWorldSimulator
         var stopwatch = Stopwatch.StartNew();
         long nextTick = stopwatch.ElapsedMilliseconds + TICK_MS;
 
+        long sleeptime = nextTick - stopwatch.ElapsedMilliseconds;
         while (!_cancellationTokenSource.Token.IsCancellationRequested)
         {
-            long now = stopwatch.ElapsedMilliseconds;
-            float deltaTime = TICK_MS / 1000.0f;
-
-            // Clean disconnected players
-            CleanDisconnectedPlayers();
-
             // Process input queue
             if (_inputQueue.TryDequeue(out PlayerInput input))
             {
+                var now = stopwatch.ElapsedMilliseconds;
+                var deltaTime = TICK_MS / 1000.0f;
+                
                 // Do not process disconnected players inputs
-                if (!_players.ContainsKey(input.PlayerId))
+                if (!_players.ContainsKey(input.SessionId))
                     continue;
 
                 var ms = input.Timestamp - input.InputPacket.Timestamp;
 
                 // TODO Enable this once we have auth server running
-                if (!_players.TryGetValue(input.PlayerId, out var player))
+                if (!_players.TryGetValue(input.SessionId, out var player))
                     continue;
 
                 // TODO Is is the correct player? since we are not disconnecting players
@@ -124,31 +136,10 @@ public class WorldSimulator : IWorldSimulator
 
             // Sleep until next tick
             nextTick += TICK_MS;
-            long sleeptime = nextTick - stopwatch.ElapsedMilliseconds;
             if (sleeptime > 0)
                 await Task.Delay((int)sleeptime, _cancellationTokenSource.Token);
             else
                 Console.WriteLine($"World TICK is lagging by {-sleeptime}ms");
-        }
-    }
-
-    private void CleanDisconnectedPlayers()
-    {
-        if (_players.Count == 0)
-            return;
-        
-        var disconnectedPlayers = new List<Player>();
-        foreach (var p in _players.Values)
-        {
-            if (!p.Session.IsConnected)
-            {
-                disconnectedPlayers.Add(p);
-            }
-        }
-
-        foreach (var dcp in disconnectedPlayers)
-        {
-            _players.TryRemove(dcp.Id, out _);
         }
     }
 }

@@ -13,18 +13,15 @@ public class InputPacketHandler : IPacketHandler
        _worldSimulator = worldSimulator;
     }
     
-    public void Handle(IPacket packet)
+    public void Handle(IPacket packet, Guid sessionId)
     {
         var input = (InputPacket)packet;
-
-        // if (_worldSimulator.HasInput(input))
-        //     return;
         
         // TODO Build the PlayerInput packet to enqueue
-        var playerInput = new PlayerInput()
+        var playerInput = new PlayerInput
         {
             InputPacket = input,
-            PlayerId = Guid.Empty,   // TODO This clients player id
+            SessionId =  sessionId,
             // Represents the Servers timestamp
             Timestamp = (uint)DateTime.UtcNow.Ticks
         };

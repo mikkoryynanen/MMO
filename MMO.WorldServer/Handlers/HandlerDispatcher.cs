@@ -15,7 +15,7 @@ public class HandlerDispatcher : IDispatcher
         RegisterHandlers();
     }
 
-    public void Dispatch(ushort opCode, IPacket packet)
+    public void Dispatch(ushort opCode, IPacket packet, Guid sessionId)
     {
         if (!_handlerTypes.ContainsKey(opCode))
         {
@@ -23,7 +23,7 @@ public class HandlerDispatcher : IDispatcher
         }
         else
         {
-            _handlerTypes[opCode].Handle(packet);
+            _handlerTypes[opCode].Handle(packet, sessionId);
         }
     }
 

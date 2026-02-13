@@ -4,5 +4,5 @@ namespace MMO.WorldServer.Handlers;
 
 public interface IPacketHandler
 {
-    void Handle(IPacket packet);
+    void Handle(IPacket packet, Guid sessionId);
 }

@@ -1,0 +1,16 @@
+
+POST http://localhost:5270/world/entities
+Accept: application/json
+Content-Type: application/json
+
+{
+  "entities": [
+    {
+      "id": "asdf",
+      "positionx": 100,
+      "positiony": 100
+    }
+  ]
+}
+
+###

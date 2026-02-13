@@ -11,6 +11,7 @@
     <ItemGroup>
       <ProjectReference Include="..\MMO.Auth\MMO.Auth.csproj" />
       <ProjectReference Include="..\MMO.Database.Migrations\MMO.Database.Migrations.csproj" />
+      <ProjectReference Include="..\MMO.Dev.DevAPI\MMO.Dev.DevAPI.csproj" />
       <ProjectReference Include="..\MMO.DummyClient\MMO.DummyClient.csproj" />
       <ProjectReference Include="..\MMO.WorldServer\MMO.WorldServer.csproj" />
     </ItemGroup>

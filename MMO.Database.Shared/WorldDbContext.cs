@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MMO.WorldServer.Database.Models;
 
-namespace MMO.WorldServer.Database;
+namespace MMO.Database.Shared;
 
 public class WorldDbContext : DbContext
 {

@@ -5,24 +5,28 @@ namespace MMO.Database.Migrations;
 
 public class MigrationWorker : BackgroundService
 {
-    private readonly AccountDbContext _dbContext;
+    private readonly AccountDbContext _accountDbContext;
+    private readonly WorldDbContext _worldDbContext;
 
     public MigrationWorker(
         IServiceProvider serviceProvider, 
         IHostApplicationLifetime hostApplicationLifetime,
-        AccountDbContext dbContext)
+        AccountDbContext accountDbContext,
+        WorldDbContext worldDbContext)
     {
-        _dbContext = dbContext;
+        _accountDbContext = accountDbContext;
+        _worldDbContext = worldDbContext;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try
         {
-            await _dbContext.Database.MigrateAsync(stoppingToken);
+            await _accountDbContext.Database.MigrateAsync(stoppingToken);
+            await _worldDbContext.Database.MigrateAsync(stoppingToken);
             Console.WriteLine("✅ Database migration completed successfully.");
             
-            await _dbContext.Database.EnsureCreatedAsync(stoppingToken);
+            // await _accountDbContext.Database.EnsureCreatedAsync(stoppingToken);
         
             // Seed Data
             // var strategy = dbContext.Database.CreateExecutionStrategy();

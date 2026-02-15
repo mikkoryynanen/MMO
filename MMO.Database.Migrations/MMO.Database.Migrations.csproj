@@ -6,23 +6,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
 </PropertyGroup>
 
-<ItemGroup>
-    <!-- Aspire integration -->
-    <PackageReference Include="Aspire.Pomelo.EntityFrameworkCore.MySql" Version="13.1.0" />
-
-    <!-- Use EF Core 9 with .NET 10 - this is officially supported -->
-    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
-
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.3">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.3">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-</ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Aspire.Pomelo.EntityFrameworkCore.MySql" Version="13.1.1" />
+        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.2" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.2">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
 
 <ItemGroup>
   <ProjectReference Include="..\MMO.Database.Shared\MMO.Database.Shared.csproj" />

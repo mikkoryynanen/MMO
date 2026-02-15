@@ -6,23 +6,21 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
     </PropertyGroup>
-
+    
     <ItemGroup>
-      <Reference Include="Microsoft.Extensions.Hosting">
-        <HintPath>..\..\..\..\Program Files\dotnet\shared\Microsoft.AspNetCore.App\10.0.2\Microsoft.Extensions.Hosting.dll</HintPath>
-      </Reference>
-      <Reference Include="Microsoft.Extensions.Hosting.Abstractions">
-        <HintPath>..\..\..\..\Program Files\dotnet\shared\Microsoft.AspNetCore.App\10.0.2\Microsoft.Extensions.Hosting.Abstractions.dll</HintPath>
-      </Reference>
+        <PackageReference Include="MessagePack" Version="3.1.4" />
+        <PackageReference Include="Aspire.Pomelo.EntityFrameworkCore.MySql" Version="13.1.1" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Abstractions" Version="9.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Analyzers" Version="9.0.2" />
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="MessagePack" Version="3.1.4" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.3" />
-      <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.2" />
-    </ItemGroup>
-
-    <ItemGroup>
+      <ProjectReference Include="..\MMO.Database.Shared\MMO.Database.Shared.csproj" />
       <ProjectReference Include="..\MMO.Shared\MMO.Shared.csproj" />
     </ItemGroup>
 

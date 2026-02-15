@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using MMO.Database.Shared;
 using MMO.WorldServer.Handlers;
 using MMO.WorldServer.Services;
 using MMO.WorldServer.Singletons;
@@ -12,15 +13,12 @@ internal class Program
     
     static async Task Main(string[] args)
     {
-        IHostBuilder builder = new HostBuilder()
-            .ConfigureServices(sc =>
-            {
-                sc.AddSingleton<IDispatcher, HandlerDispatcher>();
-                sc.AddSingleton<IWorldSimulator, WorldSimulator>();
-                sc.AddSingleton<ISessionManager, SessionManager>();
-                
-                sc.AddHostedService<GameHostedService>();
-            });
+        var builder = Host.CreateApplicationBuilder();
+        builder.Services.AddSingleton<IDispatcher, HandlerDispatcher>();
+        builder.Services.AddSingleton<IWorldSimulator, WorldSimulator>();
+        builder.Services.AddSingleton<ISessionManager, SessionManager>();
+        builder.Services.AddHostedService<GameHostedService>();
+        builder.AddMySqlDbContext<WorldDbContext>("worlddb");
 
         try
         {

@@ -2,10 +2,10 @@
 
 #nullable disable
 
-namespace MMO.Database.Migrations.Migrations.WorldDb
+namespace MMO.Database.Migrations.Migrations
 {
     /// <inheritdoc />
-    public partial class AddWorldDb : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -19,8 +19,8 @@ namespace MMO.Database.Migrations.Migrations.WorldDb
                 {
                     Id = table.Column<string>(type: "varchar(255)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    PositionX = table.Column<float>(type: "float", nullable: false),
-                    PositionY = table.Column<float>(type: "float", nullable: false)
+                    PositionX = table.Column<int>(type: "int", nullable: false),
+                    PositionY = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {

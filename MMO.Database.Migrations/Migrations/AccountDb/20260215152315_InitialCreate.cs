@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace MMO.Database.Migrations.Migrations
+namespace MMO.Database.Migrations.Migrations.AccountDb
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration

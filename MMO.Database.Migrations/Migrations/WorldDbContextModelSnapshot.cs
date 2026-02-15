@@ -3,23 +3,20 @@ using MMO.Database.Shared;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace MMO.Database.Migrations.Migrations.WorldDb
+namespace MMO.Database.Migrations.Migrations
 {
     [DbContext(typeof(WorldDbContext))]
-    [Migration("20260213123118_AddWorldDb")]
-    partial class AddWorldDb
+    partial class WorldDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.3")
+                .HasAnnotation("ProductVersion", "9.0.2")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
@@ -29,11 +26,11 @@ namespace MMO.Database.Migrations.Migrations.WorldDb
                     b.Property<string>("Id")
                         .HasColumnType("varchar(255)");
 
-                    b.Property<float>("PositionX")
-                        .HasColumnType("float");
+                    b.Property<int>("PositionX")
+                        .HasColumnType("int");
 
-                    b.Property<float>("PositionY")
-                        .HasColumnType("float");
+                    b.Property<int>("PositionY")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 

@@ -1,7 +1,10 @@
 using System.Net.Sockets;
 using System.Threading.Channels;
 using MessagePack;
+using MessagePack.Formatters;
+using MMO.Database.Shared;
 using MMO.Shared;
+using MMO.Shared.Packets.Server;
 using MMO.Shared.Serialization;
 using MMO.WorldServer.Handlers;
 using MMO.WorldServer.Singletons;
@@ -11,25 +14,30 @@ namespace MMO.WorldServer;
 public class Session
 {
     public delegate void DisconnectedHandler(Guid id);
+
     public event DisconnectedHandler OnDisconnected;
-    
+
     public bool IsConnected => _client?.Connected ?? false;
     public Guid Id { get; private set; }
 
-    private Channel<IPacket> _outgoingPackets; 
-    
+    private Channel<IPacket> _outgoingPackets;
+
     private TcpClient _client;
     private NetworkStream _stream;
-    
+
     private readonly IDispatcher _dispatcher;
     private readonly IWorldSimulator _worldSimulator;
+    private CancellationToken _cancellationToken = new();
 
-    public Session(IDispatcher dispatcher, TcpClient client, IWorldSimulator worldSimulator)
+    public Session(
+        IDispatcher dispatcher,
+        TcpClient client,
+        IWorldSimulator worldSimulator)
     {
         Id = Guid.NewGuid();
-        
+
         _outgoingPackets = Channel.CreateUnbounded<IPacket>();
-        
+
         _dispatcher = dispatcher;
         _client = client;
         _stream = client.GetStream();
@@ -41,38 +49,44 @@ public class Session
         _outgoingPackets.Writer.TryWrite(packet);
     }
 
-    public async Task RunAsync(CancellationToken cancellationToken)
+    public async Task RunAsync()
     {
         Console.WriteLine("Client connected. Starting session...");
-        
+
         // TODO This should be in the network layer? this should already be the game world layer
         // TODO Session should only be considered as container class for session relate stuff
-        
+
         // Outgoing packets are on different thread
         Task.Run(WriteOutgoingPackets);
         Task.Run(PollClient);
-        
+        Task.Run(ReadPackets);
+    }
+
+    private async Task ReadPackets()
+    {
         // Main loop to read packets from the client
-        while (!cancellationToken.IsCancellationRequested)
+        while (!_cancellationToken.IsCancellationRequested)
         {
             // TODO Could us channel here, now we are waiting for all bytes to arrive from the packet before moving ahead
-           // TODO Should do this least once the header is read 
-            
+            // TODO Should do this least once the header is read 
+
             // Read received bytes
             byte[] headerBuffer = new byte[6];
             await ReadStream(_stream, headerBuffer, 6);
-                    
+
             int payloadLength = BitConverter.ToInt32(headerBuffer, 0) - 2; // 2 bytes for op code
             ushort opCode = BitConverter.ToUInt16(headerBuffer, 4);
-                    
+
             byte[] payload = new byte[payloadLength];
             if (payloadLength > 0)
             {
                 await ReadStream(_stream, payload, payloadLength);
             }
-                    
+
             var packet = Serializer.Deserialize<IPacket>(payload);
             _dispatcher.Dispatch(opCode, packet, Id);
+
+            Console.WriteLine($"{DateTime.UtcNow.ToString("T")} | Session {Id} read packet {packet.GetType().Name}");
         }
     }
 
@@ -91,9 +105,10 @@ public class Session
                     Disconnect();
                 }
             }
+
             await Task.Delay(1000);
         }
-        
+
         Disconnect();
     }
 
@@ -145,21 +160,22 @@ public class Session
         _worldSimulator.RemovePlayer(Id);
         OnDisconnected?.Invoke(Id);
     }
-    
+
     private async Task ReadStream(NetworkStream stream, byte[] buffer, int amount)
     {
-        int bytesRead = 0;
-        while (bytesRead < amount)
+        try
         {
-            try
+            int bytesRead = 0;
+            while (bytesRead < amount)
             {
-                int read = await stream.ReadAsync(buffer.AsMemory(bytesRead, amount - bytesRead), CancellationToken.None);
+                int read = await stream.ReadAsync(buffer.AsMemory(bytesRead, amount - bytesRead), _cancellationToken);
                 bytesRead += read;
             }
-            catch (IOException e)
-            {
-                // TODO Client considered disconnected
-            }
+        }
+        catch (IOException e)
+        {
+            // TODO Client considered disconnected
+            Disconnect();
         }
     }
 }

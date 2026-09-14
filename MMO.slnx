@@ -4,6 +4,7 @@
   <Project Path="MMO.Database.Migrations/MMO.Database.Migrations.csproj" />
   <Project Path="MMO.Database.Shared/MMO.Database.Shared.csproj" />
   <Project Path="MMO.Dev.DevAPI/MMO.Dev.DevAPI.csproj" />
+  <Project Path="MMO.Client/MMO.Client.csproj" />
   <Project Path="MMO.DummyClient/MMO.DummyClient.csproj" />
   <Project Path="MMO.Shared/MMO.Shared.csproj" />
   <Project Path="MMO.WorldServer/MMO.WorldServer.csproj" />

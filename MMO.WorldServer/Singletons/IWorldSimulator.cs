@@ -9,5 +9,5 @@ public interface IWorldSimulator
    void AddPlayer(Session session);
    public void RemovePlayer(Guid sessionId);
    void EnqueueInput(PlayerInput input);
-   public bool HasInput(InputPacket input);
+   // public bool HasInput(InputPacket input);
 }

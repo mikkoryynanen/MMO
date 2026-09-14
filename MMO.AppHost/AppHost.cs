@@ -30,6 +30,7 @@ var worldServer = builder.AddProject<Projects.MMO_WorldServer>("world-server")
 //     .WithReference(worldServer)
 //     .WaitFor(worldServer);
 
+
 var authAPI = builder.AddProject<Projects.MMO_Auth>("auth-api")
     .WithHttpHealthCheck("/health")
     .WithReference(accountDB)
@@ -42,5 +43,10 @@ var devAPI = builder.AddProject<Projects.MMO_Dev_DevAPI>("dev-api")
     .WithReference(worldDB)
     .WaitFor(worldDB)
     .WaitForCompletion(migrations);
+
+var client = builder.AddProject<Projects.MMO_Client>("client")
+    .WithReference(worldServer)
+    .WithReference(authAPI)
+    .WaitFor(worldServer);
 
 await builder.Build().RunAsync();

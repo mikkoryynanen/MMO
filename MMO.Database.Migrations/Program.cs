@@ -8,6 +8,8 @@ var builder = Host.CreateApplicationBuilder(args);
 var accountDbConnectionString = builder.Configuration.GetConnectionString("accountdb");
 
 // 2. Register the context manually so you can access the "MySqlOptions" builder
+// builder.AddMySqlDbContext<AccountDbContext>("accountdb");
+// builder.AddMySqlDbContext<WorldDbContext>("worlddb");
 builder.Services.AddDbContext<AccountDbContext>(options =>
 {
     options.UseMySql(accountDbConnectionString, ServerVersion.AutoDetect(accountDbConnectionString), 

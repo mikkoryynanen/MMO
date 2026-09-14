@@ -1,7 +1,10 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using Microsoft.AspNetCore.Mvc.TagHelpers;
+using MMO.Database.Shared;
 using MMO.Shared.Packets;
 using MMO.Shared.Packets.Server;
+using MMO.WorldServer.Map;
 
 namespace MMO.WorldServer.Singletons;
 
@@ -32,18 +35,21 @@ public class WorldSimulator : IWorldSimulator
 
     private readonly ConcurrentDictionary<Guid, Player> _players = new();
 
-    // private readonly Channel<PlayerInput> _inputChannel;
     private readonly Queue<PlayerInput> _inputQueue = new();
     private readonly CancellationTokenSource _cancellationTokenSource = new();
+    private readonly WorldDbContext _worldDbContext;
+    private readonly WorldMap _worldMap = new();
 
-    public WorldSimulator()
+    public WorldSimulator(WorldDbContext worldDbContext)
     {
-        // _inputChannel = Channel.CreateUnbounded<PlayerInput>();
+        _worldDbContext = worldDbContext;
     }
 
     public void Start()
     {
         _simulationTask = Task.Run(SimulationLoop);
+        
+        _worldMap.Populate(_worldDbContext.WorldEntities.ToArray());
 
         IsRunning = true;
     }
@@ -73,8 +79,8 @@ public class WorldSimulator : IWorldSimulator
             {
                 if (peekedInput.SessionId == sessionId)
                 {
-                    if (_inputQueue.TryDequeue(out _))
-                        Console.WriteLine($"Removed input");
+                    if (!_inputQueue.TryDequeue(out _))
+                        Console.WriteLine("Failed to remove inputs");
                 }
             }
         }
@@ -101,35 +107,46 @@ public class WorldSimulator : IWorldSimulator
         long sleeptime = nextTick - stopwatch.ElapsedMilliseconds;
         while (!_cancellationTokenSource.Token.IsCancellationRequested)
         {
+            Console.WriteLine("World tick");
+            
+            // TODO, we just out from here for some reason
+            
             // Process input queue
             if (_inputQueue.TryDequeue(out PlayerInput input))
             {
-                var now = stopwatch.ElapsedMilliseconds;
+                // Console.WriteLine($"{DateTime.UtcNow.ToString("T")} | Clearing input queue");
+                if (input.InputPacket.X == 0 && input.InputPacket.Y == 0)
+                    continue;
+                
+                // var now = stopwatch.ElapsedMilliseconds;
                 var deltaTime = TICK_MS / 1000.0f;
                 
                 // Do not process disconnected players inputs
                 if (!_players.ContainsKey(input.SessionId))
                     continue;
 
-                var ms = input.Timestamp - input.InputPacket.Timestamp;
+                // var ms = input.Timestamp - input.InputPacket.Timestamp;
 
-                // TODO Enable this once we have auth server running
                 if (!_players.TryGetValue(input.SessionId, out var player))
                     continue;
 
-                // TODO Is is the correct player? since we are not disconnecting players
                 // Update player position
-                player.X += input.InputPacket.X * 200f * deltaTime;
-                player.Y += input.InputPacket.Y * 200f * deltaTime;
-
-                Console.WriteLine($"input x: {input.InputPacket.X}, y: {input.InputPacket.Y}");
-
-                // TODO Quantize position values
-                player.Session.QueuePacket(new PlayerPositionPacket
+                var requestedPositionX = player.X + input.InputPacket.X * 200f * deltaTime;
+                var requestedPositonY = player.Y + input.InputPacket.Y * 200f * deltaTime;
+                if (!_worldMap.IsColliding(requestedPositionX, requestedPositonY))
                 {
-                    X = player.X,
-                    Y = player.Y
-                });
+                    player.X = requestedPositionX;
+                    player.Y = requestedPositonY;
+                    // Console.WriteLine($"input x: {input.InputPacket.X}, y: {input.InputPacket.Y}");
+
+                    // Queue the position packets to send to other clients via the session class
+                    // TODO Quantize position values
+                    player.Session.QueuePacket(new PlayerPositionPacket
+                    {
+                        X = player.X,
+                        Y = player.Y
+                    });
+                }
             }
 
             // TODO Update player position on the map grid
@@ -141,5 +158,7 @@ public class WorldSimulator : IWorldSimulator
             else
                 Console.WriteLine($"World TICK is lagging by {-sleeptime}ms");
         }
+
+        Console.WriteLine($"World simulator shut down");
     }
 }

@@ -26,23 +26,13 @@ public class WorldMap
 
    public bool IsColliding(float requestedPosX, float requestedPosY)
    {
-      // World to map
-      var cell = map[(int)requestedPosX, (int)requestedPosY];
-      if (cell == null)
-      {
-         return false;
-      }
+      int ix = (int)requestedPosX;
+      int iy = (int)requestedPosY;
+      if (ix < 0 || iy < 0 || ix >= WORLD_WIDTH || iy >= WORLD_HEIGHT)
+         return true; // out-of-bounds = wall
 
-      return true;
-      
-      for (int x = 0; x < WORLD_WIDTH; x++)
-      {
-         for (int y = 0; y < WORLD_HEIGHT; y++)
-         {
-         } 
-      }
-
-      return false;
+      var cell = map[ix, iy];
+      return cell is not null;
    }
 
    private WorldEntity? GetCellEntity(WorldEntity[] entities, int x, int y)

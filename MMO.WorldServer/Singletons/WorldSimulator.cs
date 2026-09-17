@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Threading.Channels;
 using Microsoft.AspNetCore.Mvc.TagHelpers;
 using MMO.Database.Shared;
 using MMO.Shared.Packets;
@@ -35,7 +36,7 @@ public class WorldSimulator : IWorldSimulator
 
     private readonly ConcurrentDictionary<Guid, Player> _players = new();
 
-    private readonly Queue<PlayerInput> _inputQueue = new();
+    private readonly Channel<PlayerInput> _inputQueue = Channel.CreateUnbounded<PlayerInput>();
     private readonly CancellationTokenSource _cancellationTokenSource = new();
     private readonly WorldDbContext _worldDbContext;
     private readonly WorldMap _worldMap = new();
@@ -75,26 +76,26 @@ public class WorldSimulator : IWorldSimulator
             Console.WriteLine($"Removed player");
             // TODO Remove this players inputs as well? do they get removed from inputQueue
 
-            while (_inputQueue.TryPeek(out var peekedInput))
-            {
-                if (peekedInput.SessionId == sessionId)
-                {
-                    if (!_inputQueue.TryDequeue(out _))
-                        Console.WriteLine("Failed to remove inputs");
-                }
-            }
+            // while (_inputQueue.Reader.TryPeek(out var peekedInput))
+            // {
+            //     if (peekedInput.SessionId == sessionId)
+            //     {
+            //         if (!_inputQueue.Reader.TryDequeue(out _))
+            //             Console.WriteLine("Failed to remove inputs");
+            //     }
+            // }
         }
     }
 
     public void EnqueueInput(PlayerInput input)
     {
-        _inputQueue.Enqueue(input);
-        // _inputQueue.Writer.TryWrite(input);
+        // _inputQueue.Enqueue(input);
+        _inputQueue.Writer.TryWrite(input);
     }
 
     public bool HasInput(InputPacket input)
     {
-        return _inputQueue.TryPeek(out var peekedInput) &&
+        return _inputQueue.Reader.TryPeek(out PlayerInput peekedInput) &&
                peekedInput.InputPacket.X == input.X &&
                peekedInput.InputPacket.Y == input.Y;
     }
@@ -109,44 +110,53 @@ public class WorldSimulator : IWorldSimulator
         {
             Console.WriteLine("World tick");
             
-            // TODO, we just out from here for some reason
-            
-            // Process input queue
-            if (_inputQueue.TryDequeue(out PlayerInput input))
+            // TODO, add try catch here
+            try
             {
-                // Console.WriteLine($"{DateTime.UtcNow.ToString("T")} | Clearing input queue");
-                if (input.InputPacket.X == 0 && input.InputPacket.Y == 0)
-                    continue;
-                
-                // var now = stopwatch.ElapsedMilliseconds;
-                var deltaTime = TICK_MS / 1000.0f;
-                
-                // Do not process disconnected players inputs
-                if (!_players.ContainsKey(input.SessionId))
-                    continue;
 
-                // var ms = input.Timestamp - input.InputPacket.Timestamp;
-
-                if (!_players.TryGetValue(input.SessionId, out var player))
-                    continue;
-
-                // Update player position
-                var requestedPositionX = player.X + input.InputPacket.X * 200f * deltaTime;
-                var requestedPositonY = player.Y + input.InputPacket.Y * 200f * deltaTime;
-                if (!_worldMap.IsColliding(requestedPositionX, requestedPositonY))
+            
+                // Process input queue
+                while (_inputQueue.Reader.TryRead(out var input))
                 {
-                    player.X = requestedPositionX;
-                    player.Y = requestedPositonY;
-                    // Console.WriteLine($"input x: {input.InputPacket.X}, y: {input.InputPacket.Y}");
+                    // Console.WriteLine($"{DateTime.UtcNow.ToString("T")} | Clearing input queue");
+                    if (input.InputPacket.X == 0 && input.InputPacket.Y == 0)
+                        continue;
+                
+                    // var now = stopwatch.ElapsedMilliseconds;
+                    var deltaTime = TICK_MS / 1000.0f;
+                
+                    // Do not process disconnected players inputs
+                    if (!_players.ContainsKey(input.SessionId))
+                        continue;
 
-                    // Queue the position packets to send to other clients via the session class
-                    // TODO Quantize position values
-                    player.Session.QueuePacket(new PlayerPositionPacket
+                    // var ms = input.Timestamp - input.InputPacket.Timestamp;
+
+                    if (!_players.TryGetValue(input.SessionId, out var player))
+                        continue;
+
+                    // Update player position
+                    var requestedPositionX = player.X + input.InputPacket.X * 200f * deltaTime;
+                    var requestedPositonY = player.Y + input.InputPacket.Y * 200f * deltaTime;
+                    if (!_worldMap.IsColliding(requestedPositionX, requestedPositonY))
                     {
-                        X = player.X,
-                        Y = player.Y
-                    });
+                        player.X = requestedPositionX;
+                        player.Y = requestedPositonY;
+                        // Console.WriteLine($"input x: {input.InputPacket.X}, y: {input.InputPacket.Y}");
+
+                        // Queue the position packets to send to other clients via the session class
+                        // TODO Quantize position values
+                        player.Session.QueuePacket(new PlayerPositionPacket
+                        {
+                            X = player.X,
+                            Y = player.Y
+                        });
+                    }
                 }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
             }
 
             // TODO Update player position on the map grid

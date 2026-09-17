@@ -47,6 +47,7 @@ var devAPI = builder.AddProject<Projects.MMO_Dev_DevAPI>("dev-api")
 var client = builder.AddProject<Projects.MMO_Client>("client")
     .WithReference(worldServer)
     .WithReference(authAPI)
-    .WaitFor(worldServer);
+    .WaitFor(worldServer)
+    .WithReplicas(2);
 
 await builder.Build().RunAsync();

@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading.Channels;
-using Microsoft.AspNetCore.Mvc.TagHelpers;
 using MMO.Database.Shared;
 using MMO.Shared.Packets;
 using MMO.Shared.Packets.Server;
@@ -40,14 +39,16 @@ public class WorldSimulator : IWorldSimulator
     private readonly CancellationTokenSource _cancellationTokenSource = new();
     private readonly WorldDbContext _worldDbContext;
     private readonly WorldMap _worldMap = new();
+    private ISessionManager _sessionManager;
 
     public WorldSimulator(WorldDbContext worldDbContext)
     {
         _worldDbContext = worldDbContext;
     }
 
-    public void Start()
+    public void Start(ISessionManager sessionManager)
     {
+        _sessionManager = sessionManager;
         _simulationTask = Task.Run(SimulationLoop);
         
         _worldMap.Populate(_worldDbContext.WorldEntities.ToArray());
@@ -110,11 +111,8 @@ public class WorldSimulator : IWorldSimulator
         {
             Console.WriteLine("World tick");
             
-            // TODO, add try catch here
             try
             {
-
-            
                 // Process input queue
                 while (_inputQueue.Reader.TryRead(out var input))
                 {
@@ -131,25 +129,31 @@ public class WorldSimulator : IWorldSimulator
 
                     // var ms = input.Timestamp - input.InputPacket.Timestamp;
 
-                    if (!_players.TryGetValue(input.SessionId, out var player))
-                        continue;
-
-                    // Update player position
-                    var requestedPositionX = player.X + input.InputPacket.X * 200f * deltaTime;
-                    var requestedPositonY = player.Y + input.InputPacket.Y * 200f * deltaTime;
-                    if (!_worldMap.IsColliding(requestedPositionX, requestedPositonY))
+                    if (_players.TryGetValue(input.SessionId, out var player))
                     {
-                        player.X = requestedPositionX;
-                        player.Y = requestedPositonY;
-                        // Console.WriteLine($"input x: {input.InputPacket.X}, y: {input.InputPacket.Y}");
-
-                        // Queue the position packets to send to other clients via the session class
-                        // TODO Quantize position values
-                        player.Session.QueuePacket(new PlayerPositionPacket
+                        // Update player position
+                        var requestedPositionX = player.X + input.InputPacket.X * 200f * deltaTime;
+                        var requestedPositonY = player.Y + input.InputPacket.Y * 200f * deltaTime;
+                        if (!_worldMap.IsColliding(requestedPositionX, requestedPositonY))
                         {
-                            X = player.X,
-                            Y = player.Y
-                        });
+                            player.X = requestedPositionX;
+                            player.Y = requestedPositonY;
+                            // Console.WriteLine($"input x: {input.InputPacket.X}, y: {input.InputPacket.Y}");
+                        }
+
+                        // Broadcast new position to other clients 
+                        // TODO: This would need nearby player search
+                        foreach (var session in _sessionManager.GetSessions())
+                        {
+                            // TODO Quantize position values
+                            session.QueuePacket(new PlayerPositionPacket
+                            {
+                                // TODO Quite huge to be sent as guid, 128bits
+                                Id = player.Session.Id,
+                                X = player.X,
+                                Y = player.Y
+                            });
+                        }
                     }
                 }
             }

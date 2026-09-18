@@ -30,7 +30,7 @@ while (true)
     // using var ms = new MemoryStream();
     // using var writer = new BinaryWriter(ms, Encoding.UTF8, leaveOpen: false);
     
-    var helloPacket = new HelloPacket() { Number = 69 };
+    var helloPacket = new HelloPacket();
     
     // var envelope = new PacketEnvelope()
     // {

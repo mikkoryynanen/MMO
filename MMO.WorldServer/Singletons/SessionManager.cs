@@ -1,5 +1,4 @@
 using System.Net.Sockets;
-using MMO.Database.Shared;
 using MMO.Shared.Packets.Server;
 using MMO.WorldServer.Handlers;
 
@@ -10,19 +9,16 @@ public class SessionManager : ISessionManager
     private Dictionary<Guid, Session> _sessions = new();
     
     private readonly IDispatcher _dispatcher;
-    private readonly IWorldSimulator _worldSimulator;
 
     public SessionManager(
-        IDispatcher dispatcher, 
-        IWorldSimulator worldSimulator)
+        IDispatcher dispatcher)
     {
         _dispatcher = dispatcher;
-        _worldSimulator = worldSimulator;
     }
     
     public Session CreateSession(TcpClient client)
     {
-        var session = new Session(_dispatcher, client, _worldSimulator);
+        var session = new Session(_dispatcher, client);
         session.OnDisconnected += RemoveSession;
         _sessions.Add(session.Id, session);
         Task.Run(session.RunAsync);
@@ -30,11 +26,10 @@ public class SessionManager : ISessionManager
         // Inform other sessions of a starting session
         foreach (var s in _sessions)
         {
-            if (s.Key == session.Id)
-                continue;
-            
+
             s.Value.QueuePacket(new PlayerJoinedPacket
             {
+                Id =  session.Id,
                 Username = "New player"
             });
         }
@@ -51,5 +46,10 @@ public class SessionManager : ISessionManager
     public Session? GetSession(Guid sessionId)
     {
         return _sessions.GetValueOrDefault(sessionId);
+    }
+    
+    public Session[]  GetSessions()
+    {
+        return _sessions.Values.ToArray();
     }
 }

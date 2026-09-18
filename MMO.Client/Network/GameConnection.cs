@@ -38,7 +38,7 @@ public class GameConnection : IAsyncDisposable
     public async Task SendHelloAsync(CancellationToken ct = default)
     {
         if (_stream is null || !IsConnected) return;
-        await PacketCodec.WriteAsync(_stream, (ushort)OpCodes.Test, new HelloPacket { Number = 1 }, ct);
+        await PacketCodec.WriteAsync(_stream, (ushort)OpCodes.Test, new HelloPacket(), ct);
     }
 
     public async Task SendInputAsync(sbyte x, sbyte y, CancellationToken ct = default)

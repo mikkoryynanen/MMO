@@ -106,13 +106,15 @@ public class GameClient : IAsyncDisposable
         {
             if (received.IsPosition && received.Body is PlayerPositionPacket pos)
             {
-                // Server currently only echoes our own position back; until broadcast is
-                // wired server-side, all Position packets are assumed to be self.
-                State.ApplySelfPosition(pos.X, pos.Y);
+                State.ApplyRemotePosition(pos.Id, pos.X, pos.Y);
             }
             else if (received.IsPlayerJoined && received.Body is PlayerJoinedPacket join)
             {
-                State.ApplyRemoteJoin(join.Username);
+                State.ApplyRemoteJoin(join.Id, join.Username);
+            }
+            else if (received.Body is not null)
+            {
+                Console.WriteLine($"[Client] Unhandled packet opcode=0x{received.OpCode:X4} type={received.Body.GetType().Name}");
             }
         }
     }

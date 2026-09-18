@@ -6,7 +6,9 @@ public class GameState
 {
     public Player Self { get; set; } = new();
 
-    public Dictionary<string, Player> RemotePlayers { get; } = new();
+    public Guid? SelfId { get; set; }
+
+    public Dictionary<Guid, Player> RemotePlayers { get; } = new();
 
     public string? LastEvent { get; set; }
 
@@ -16,23 +18,58 @@ public class GameState
         Self.Y = y;
     }
 
-    public void ApplyRemotePosition(string username, float x, float y)
+    public void ApplyRemotePosition(Guid id, float x, float y)
     {
-        if (!RemotePlayers.TryGetValue(username, out var p))
+        // Self-join hasn't arrived yet — server will re-broadcast next tick, and
+        // the next position echo will arrive after our SelfId is known. Drop for now.
+        if (SelfId is null)
+            return;
+
+        if (id == SelfId)
         {
-            p = new Player { Username = username };
-            RemotePlayers[username] = p;
+            Self.X = x;
+            Self.Y = y;
+            return;
+        }
+
+        if (!RemotePlayers.TryGetValue(id, out var p))
+        {
+            p = new Player { Id = id, Username = $"Player-{id.ToString()[..8]}" };
+            RemotePlayers[id] = p;
         }
         p.X = x;
         p.Y = y;
     }
 
-    public void ApplyRemoteJoin(string username, float x = 0, float y = 0)
+    public void ApplyRemoteJoin(Guid id, string username)
     {
-        if (!RemotePlayers.ContainsKey(username))
+        if (SelfId is null)
         {
-            RemotePlayers[username] = new Player { Username = username, X = x, Y = y };
-            LastEvent = $"{username} joined";
+            // First PlayerJoinedPacket we see is the server's self-join handshake —
+            // server includes the new session in the join broadcast so we know our Id.
+            SelfId = id;
+            if (!string.IsNullOrEmpty(username))
+                Self.Username = username;
+            LastEvent = "Connected";
+            return;
         }
+
+        if (id == SelfId)
+        {
+            if (!string.IsNullOrEmpty(username))
+                Self.Username = username;
+            return;
+        }
+
+        if (!RemotePlayers.TryGetValue(id, out var p))
+        {
+            p = new Player { Id = id, Username = username };
+            RemotePlayers[id] = p;
+        }
+        else if (!string.IsNullOrEmpty(username))
+        {
+            p.Username = username;
+        }
+        LastEvent = $"{username} joined";
     }
 }

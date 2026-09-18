@@ -6,8 +6,11 @@ namespace MMO.Shared.Packets.Server;
 public class PlayerPositionPacket : IPacket
 {
     [Key(0)] 
-    public float X { get; set; }
+    public Guid Id  { get; set; }
     
     [Key(1)] 
+    public float X { get; set; }
+    
+    [Key(2)] 
     public float Y { get; set; }
 }

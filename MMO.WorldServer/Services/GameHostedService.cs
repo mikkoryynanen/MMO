@@ -28,7 +28,7 @@ public sealed class GameHostedService : BackgroundService
         listener.Start();
         
         // Run the world simulator, handled its own simulation thread
-        _worldSimulator.Start();
+        _worldSimulator.Start(_sessionManager);
 
         while (!stoppingToken.IsCancellationRequested)
         {

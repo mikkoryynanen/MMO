@@ -4,7 +4,7 @@ namespace MMO.WorldServer.Singletons;
 
 public interface IWorldSimulator
 {
-   void Start();
+   void Start(ISessionManager sessionManager);
    void Stop();
    void AddPlayer(Session session);
    public void RemovePlayer(Guid sessionId);

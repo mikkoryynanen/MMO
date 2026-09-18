@@ -8,4 +8,5 @@ public interface ISessionManager
     Session CreateSession(TcpClient client);
     void RemoveSession(Guid sessionId);
     Session? GetSession(Guid sessionId);
+    Session[] GetSessions();
 }

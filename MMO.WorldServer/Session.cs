@@ -1,8 +1,6 @@
 using System.Net.Sockets;
 using System.Threading.Channels;
 using MessagePack;
-using MessagePack.Formatters;
-using MMO.Database.Shared;
 using MMO.Shared;
 using MMO.Shared.Packets.Server;
 using MMO.Shared.Serialization;
@@ -11,6 +9,9 @@ using MMO.WorldServer.Singletons;
 
 namespace MMO.WorldServer;
 
+/// <summary>
+/// Container for single player's session
+/// </summary>
 public class Session
 {
     public delegate void DisconnectedHandler(Guid id);
@@ -26,13 +27,11 @@ public class Session
     private NetworkStream _stream;
 
     private readonly IDispatcher _dispatcher;
-    private readonly IWorldSimulator _worldSimulator;
     private CancellationToken _cancellationToken = new();
 
     public Session(
         IDispatcher dispatcher,
-        TcpClient client,
-        IWorldSimulator worldSimulator)
+        TcpClient client)
     {
         Id = Guid.NewGuid();
 
@@ -41,7 +40,6 @@ public class Session
         _dispatcher = dispatcher;
         _client = client;
         _stream = client.GetStream();
-        _worldSimulator = worldSimulator;
     }
 
     public void QueuePacket(IPacket packet)
@@ -124,19 +122,22 @@ public class Session
                     // if (!_client.Connected)
                     //     continue;
 
-                    var body = MessagePackSerializer.Serialize<IPacket>(outgoingPacket);
-
+                    byte[] body = MessagePackSerializer.Serialize(outgoingPacket);
                     int totalLength = body.Length + 2; // Payload length + 2 bytes for the op code
                     byte[] packet = new byte[4 + totalLength];
 
-                    // Header
-                    BitConverter.TryWriteBytes(packet.AsSpan(0, 4), totalLength); // Packet Body Length
-                    BitConverter.TryWriteBytes(packet.AsSpan(4, 2), (ushort)OpCodes.Position); // opcode
-                    // Body
-                    body.CopyTo(packet.AsSpan(6));
-
                     try
                     {
+                        // Header
+                        // TODO What if write fails?
+                        BitConverter.TryWriteBytes(packet.AsSpan(0, 4), totalLength); // Packet Body Length
+                        var opcode = GetOpCode(outgoingPacket);
+                        BitConverter.TryWriteBytes(packet.AsSpan(4, 2), (ushort)(opcode ?? 0)); // opcode
+                        
+                        // Body
+                        body.CopyTo(packet.AsSpan(6));
+                        
+                        // Write to stream
                         _stream.Write(packet);
                         _stream.Flush();
                     }
@@ -157,8 +158,22 @@ public class Session
         _client?.Close();
         _stream = null;
         _client = null;
-        _worldSimulator.RemovePlayer(Id);
+        // TODO Send event to world simulator to remove player?
+        // _worldSimulator.RemovePlayer(Id);
         OnDisconnected?.Invoke(Id);
+    }
+
+    private OpCodes? GetOpCode(IPacket packet)
+    {
+        switch (packet)
+        {
+            case PlayerPositionPacket:
+                return OpCodes.Position;
+            case PlayerJoinedPacket:
+                return OpCodes.NewPlayer;
+        }
+
+        return null;
     }
 
     private async Task ReadStream(NetworkStream stream, byte[] buffer, int amount)
